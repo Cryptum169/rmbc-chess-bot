@@ -12,15 +12,20 @@ Source:         Adapted from recon-chess (https://pypi.org/project/reconchess/)
 import random
 import chess
 from player import Player
+from chesspiece import EnemyChessBoard
 
 
 # TODO: Rename this class to what you would like your bot to be named during the game.
 class MyAgent(Player):
 
     def __init__(self):
+
+        self.enemyBoard = None
+
         self.prev_move_result = None
         self.position_of_capture = None
         self.player = None
+
 
         
     def handle_game_start(self, color, board):
@@ -31,8 +36,12 @@ class MyAgent(Player):
         :param board: chess.Board -- initial board state
         :return:
         """
+
+        self.enemyBoard = EnemyChessBoard(ourcolor = color)
+
         # TODO: implement this method
         self.player = ChessPlay(color)
+
         
     def handle_opponent_move_result(self, captured_piece, captured_square):
         """
@@ -41,6 +50,10 @@ class MyAgent(Player):
         :param captured_piece: bool - true if your opponents captured your piece with their last move
         :param captured_square: chess.Square - position where your piece was captured
         """
+
+        self.enemyBoard.propagate()
+        self.enemyBoard.updateEnemyMove(captured_piece, captured_square)
+
         if captured_piece == True:
             self.player.eliminate(captured_square)
 
@@ -55,10 +68,13 @@ class MyAgent(Player):
         :return: chess.SQUARE -- the center of 3x3 section of the board you want to sense
         :example: choice = chess.A1
         """
-        # TODO: update this method
-        print("Possible Sense")
-        print(possible_sense)
-        return random.choice(possible_sense)
+
+        sensing_location = self.enemyBoard.generateSensing()
+        if sensing_location in possible_sense:
+            return sensing_location
+        else:
+            return random.choice(possible_sense)
+
         
     def handle_sense_result(self, sense_result):
         """
@@ -74,11 +90,7 @@ class MyAgent(Player):
             (A6, None), (B6, None), (C8, None)
         ]
         """
-        # TODO: implement this method
-        # Hint: until this method is implemented, any senses you make will be lost.
-        print("Sense Result")
-        print(sense_result)
-        pass
+        self.enemyBoard.updateSensing(sense_result)
 
     def choose_move(self, possible_moves, seconds_left):
         """
@@ -96,12 +108,14 @@ class MyAgent(Player):
         # TODO: update this method
         '''
         choice = random.choice(possible_moves)
+
         print(type(choice))
         exit()
         '''
         if seconds_left <2:
             return random.choice(possible_moves)
         choose = self.player.decision_make(possible_moves)
+
         return choice
         
     def handle_move_result(self, requested_move, taken_move, reason, captured_piece, captured_square):
@@ -116,7 +130,7 @@ class MyAgent(Player):
         :param captured_square: chess.Square - position where you captured the piece
         """
         # TODO: implement this method
-        pass
+        self.enemyBoard.updateAllyBoard(taken_move, captured_piece, captured_square)
         
     def handle_game_end(self, winner_color, win_reason):  # possible GameHistory object...
         """
