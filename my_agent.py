@@ -40,7 +40,6 @@ class MyAgent(Player):
         """
         self.enemyBoard.propagate()
         self.enemyBoard.updateEnemyMove(captured_piece, captured_square)
-        
 
     def choose_sense(self, possible_sense, possible_moves, seconds_left):
         """

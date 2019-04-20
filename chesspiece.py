@@ -9,6 +9,7 @@ EXISTENCE_THRESHOLD = 0.8
 PROPAGATION_THRESHOLD = 0.001
 np.set_printoptions(precision=5, suppress=True)
 
+
 class EnemyChessBoard:
 
     def __init__(self, ourcolor):
@@ -43,6 +44,9 @@ class EnemyChessBoard:
         
         logging.info('Board Initialization Complete')
         logging.info(sum([v for k,v in self.pieceDistri.items()]))
+
+    def getColor(self):
+        return copy.copy(self.color)
             
     def generateLookup(self):
         pass
@@ -51,19 +55,59 @@ class EnemyChessBoard:
         if not captured:
             return
 
+        # Update ally casulty
         self.allyCaptured = True
-
-        # Update Ally Situation
-        # Not gonna die in vain my dude
+        location = (location % 8, 7 - (int(location / 8)))
         self.allyBoard[location[0]][location[1]] = 0
 
     def updateSensing(self, observation):
         for idx, piece in observation:
             column = idx % 8
-            row = 7 - (int(idx / 8) - 1)
+            row = 7 - (int(idx / 8))
 
-            if piece == None:
-                
+            if not piece is None:
+                result_piece = piece.symbol()
+                print(result_piece)
+                # One of ours
+                if (self.color == chess.WHITE) and result_piece.isupper():
+                    continue
+                elif (self.color == chess.BLACK) and result_piece.islower():
+                    continue
+
+            # First, update all others
+            for k, v in self.pieceDistri.items():
+                if piece is None or not k[0] == piece.symbol().lower():
+                    v[row][column] = 0
+            
+            if piece is None:
+                continue
+
+            if piece.piece_type == chess.PAWN:
+                pass
+            elif piece.piece_type == chess.BISHOP:
+                pass
+            elif piece.piece_type == chess.ROOK:
+                pass
+            elif piece.piece_type == chess.KNIGHT:
+                pass
+            elif piece.piece_type == chess.QUEEN:
+                # There is only one queen
+                v = self.pieceDistri['q']
+                v.fill(0)
+                v[row][column] = 1
+            elif piece.piece_type == chess.KING:
+                # There is only one queen
+                v = self.pieceDistri['k']
+                v.fill(0)
+                v[row][column] = 1
+            else:
+                print("WHAT THE FUCK DID I SEE?")
+
+        # Scale up to normalize and offset difference in between
+        for k,v in self.pieceDistri.items():
+            v /= np.sum(v)
+        
+        return
 
     def generateSensing(self):
         pass
@@ -93,6 +137,7 @@ class EnemyChessBoard:
                 updated_distribution = self.piece_propagate(current_distribution, self._king_available_moves)
             else:
                 logging.fatal("Abnormal Chess piece: {}".format(item))
+                print("See abnormal chess piece")
 
             self.pieceDistri[item] = updated_distribution
 
@@ -101,7 +146,10 @@ class EnemyChessBoard:
         self.captured_location = location
 
     # Call upon making a move
-    def updateAllyBoard(self, move):
+    def updateAllyBoard(self, move, captured_piece, captured_square):
+        if (move is None):
+            return 
+
         move_string = move.uci()
         logging.info("My Move: {}".format(move_string))
         (start, end) = self._move_string_to_idx(move_string)
@@ -123,8 +171,12 @@ class EnemyChessBoard:
 
         candidate_location = [(location[0] + step,location[1])]
 
+        if location[0] + step < 0 or location[0] + step > 7:
+            return []
+
         location1 = location[1] - 1
         location2 = location[1] + 1
+
         if location1 > -1:
             if self.allyBoard[location[0] + step, location1] == 1:
                 candidate_location.append((location[0] + step, location1))
@@ -379,19 +431,19 @@ class EnemyChessBoard:
     def boardBound(self, value):
         return min(max(value, 0), 7)
 
+    # Do not enable during testing
     def testEnvironment(self):
         print(self.pieceDistri['q'])
         print(np.sum(self.pieceDistri['q']))
 
+# testBoard = EnemyChessBoard(ourcolor = chess.WHITE)
 
-testBoard = EnemyChessBoard(ourcolor = chess.WHITE)
+# move = chess.Move.from_uci("a2a4")
+# move2 = chess.Move.from_uci("d2d4")
 
-move = chess.Move.from_uci("a2a4")
-move2 = chess.Move.from_uci("d2d4")
-
-k = datetime.datetime.now()
-testBoard.updateAllyBoard(move)
-testBoard.updateAllyBoard(move2)
-for i in range(7):
-    testBoard.propagate()
-# testBoard.testEnvironment()
+# k = datetime.datetime.now()
+# testBoard.updateAllyBoard(move)
+# testBoard.updateAllyBoard(move2)
+# for i in range(7):
+#     testBoard.propagate()
+# # testBoard.testEnvironment()
