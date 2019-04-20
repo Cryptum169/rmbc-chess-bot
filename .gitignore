@@ -4,7 +4,11 @@ __pycache__/
 *$py.class
 
 *.txt
-
+*.aux
+*.out
+*.fls
+*.fdb_latexmk
+*.synctex.gz
 
 # C extensions
 *.so

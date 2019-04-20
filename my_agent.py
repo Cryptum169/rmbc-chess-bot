@@ -11,6 +11,7 @@ Source:         Adapted from recon-chess (https://pypi.org/project/reconchess/)
 
 import random
 import chess
+# from chessplay import ChessPlay
 from player import Player
 from chesspiece import EnemyChessBoard
 
@@ -33,7 +34,7 @@ class MyAgent(Player):
         :return:
         """
         self.enemyBoard = EnemyChessBoard(ourcolor = color)
-        self.player = ChessPlay(color)
+        # self.player = ChessPlay(color)
         
     def handle_opponent_move_result(self, captured_piece, captured_square):
         """
@@ -45,10 +46,10 @@ class MyAgent(Player):
 
         self.enemyBoard.updateEnemyMove(captured_piece, captured_square)
         self.enemyBoard.propagate()
-        self.enemyBoard.postCaptureUpdate()
+        self.enemyBoard.postCaptureUpdate(captured_square)
 
-        if captured_piece == True:
-            self.player.eliminate(captured_square)
+        # if captured_piece == True:
+        #     self.player.eliminate(captured_square)
 
     def choose_sense(self, possible_sense, possible_moves, seconds_left):
         """
@@ -105,11 +106,11 @@ class MyAgent(Player):
         print(type(choice))
         exit()
         '''
-        if seconds_left <2:
-            return random.choice(possible_moves)
-        choose = self.player.decision_make(possible_moves)
+        # if seconds_left <2:
+        return random.choice(possible_moves)
+        # choose = self.player.decision_make(possible_moves)
 
-        return choice
+        # return choice
         
     def handle_move_result(self, requested_move, taken_move, reason, captured_piece, captured_square):
         """

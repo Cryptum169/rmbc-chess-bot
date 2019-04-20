@@ -4,6 +4,7 @@ import numpy as np
 import chess
 import datetime
 import copy
+from scipy.stats import entropy
 
 EXISTENCE_THRESHOLD = 0.8
 PROPAGATION_THRESHOLD = 0.001
@@ -26,6 +27,7 @@ class EnemyChessBoard:
         self.rook_count = 2
         self.knight_count = 2
 
+        self.allyCapturedPosition = -1
         self.allyCaptured = False
 
         empty_board = np.zeros((6,8), dtype = np.float_)
@@ -50,15 +52,13 @@ class EnemyChessBoard:
 
     def getColor(self):
         return copy.copy(self.color)
-            
-    def generateLookup(self):
-        pass
-
+        
     def updateEnemyMove(self, captured, location):
         if not captured:
             return
 
         # Update ally casulty
+        self.allyCapturedPosition = location
         self.allyCaptured = True
         location = (location % 8, 7 - (int(location / 8)))
         self.allyBoard[location[0]][location[1]] = 0
@@ -70,12 +70,12 @@ class EnemyChessBoard:
         if not self.allyCaptured:
             return
 
-        self.allyCaptured = False
         location = (location % 8, 7 - (int(location / 8)))
 
-        # idk if we need this
+        # idk if we'll need this
         max_key = ""
         sum_dist = 0
+        sum = 0
 
         for k, v in self.pieceDistri.items():
             prob = v[location[0]][location[1]]
@@ -89,14 +89,34 @@ class EnemyChessBoard:
 
         return
 
+    def generateSensing(self):
+        if self.allyCaptured:
+            self.allyCaptured = False
+            return self.allyCapturedPosition
+
+        min_entropy = []
+
+        for k,v in self.pieceDistri.items():
+            entro_mat = np.asarray(v).reshape(-1)
+            min_entropy.append((entropy(entro_mat), k))
+
+        # Uniformity maximizes Entropy
+        keyValue = max(min_entropy, key = lambda item:item[0])[1]
+        matrix = self.pieceDistri[keyValue]
+        ind = np.unravel_index(np.argmax(matrix, axis=None), matrix.shape)
+        print(keyValue)
+        print(chess.square(file_index = ind[1], rank_index = 7 - ind[0]))
+
+        return chess.square(file_index = ind[1], rank_index = 7 - ind[0])
+
     def updateSensing(self, observation):
+        self._current_observation = observation
         for idx, piece in observation:
             column = idx % 8
             row = 7 - (int(idx / 8))
 
             if not piece is None:
                 result_piece = piece.symbol()
-                print(result_piece)
                 # One of ours
                 if (self.color == chess.WHITE) and result_piece.isupper():
                     continue
@@ -112,7 +132,8 @@ class EnemyChessBoard:
                 continue
 
             if piece.piece_type == chess.PAWN:
-                pass
+                
+                # raise Exception("Pawn Update not yet implemented!")
             elif piece.piece_type == chess.BISHOP:
                 if (row + column) % 2 == 0:
                     v = self.pieceDistri['b1']
@@ -121,12 +142,22 @@ class EnemyChessBoard:
                 v.fill(0)
                 v[row][column] = 1
             elif piece.piece_type == chess.ROOK:
-                pass
+                # raise Exception("Pawn Update not yet implemented!")
+
+                if self.rook_count == 1:
+                    v = self.pieceDistri['r1']
+                    v.fill(0)
+                    v[row][column] = 1
+                else:
+                    pass
+
             elif piece.piece_type == chess.KNIGHT:
                 if self.knight_count == 1:
                     v = self.pieceDistri['n1']
                     v.fill(0)
-                    
+                    v[row][column] = 1
+                else:
+                    pass
 
             elif piece.piece_type == chess.QUEEN:
                 # There is only one queen
@@ -143,12 +174,11 @@ class EnemyChessBoard:
 
         # Scale up to normalize and offset difference in between
         for k,v in self.pieceDistri.items():
+            # if np.sum(v) == 0:
+                # print(v)
             v /= np.sum(v)
         
         return
-
-    def generateSensing(self):
-        pass
 
     def returnDistribution(self):
         return copy.deepcopy(self.pieceDistri)
@@ -192,6 +222,53 @@ class EnemyChessBoard:
         logging.info("Update board:\n{}".format(self.allyBoard))
 
         # TODO THIS IS NOT DONE YET
+
+        # If in this observation
+        if captured_piece:
+            self.survivingCount -= 1
+            last_sense = [x for x, piece in self._current_observation]
+            location = (captured_square % 8, 7 - int(captured_square / 8))
+            if captured_square in last_sense:
+                # welp, this is rare
+                # Captured Square in last Sense
+                # 100% Sure situation, somehow implement and test it
+                ind = last_sense.index(captured_square)
+                piece_type = self._current_observation[ind][1].symbol().lower()
+                if piece_type == 'q':
+                    self.pieceDistri['q'].fill(0)
+                elif piece_type == 'b':
+                    if (location[0] + location[1]) % 2 == 0:
+                        v = self.pieceDistri['b1']
+                    else:
+                        v = self.pieceDistri['b2']
+                    v.fill(0)
+                elif piece_type == 'p':
+                    # This pawn has died
+                    v = self.pieceDistri['p' + str(location[1] + 1)]
+                    v.fill(0)
+                elif piece_type == 'n':
+                    self.knight_count -= 1
+                    if self.knight_count != 0:
+                        self.pieceDistri['n1'] += self.pieceDistri['n2']
+                        self.pieceDistri['n1'] /= 2
+                        self.pieceDistri['n2'].fill(0)
+                    else:
+                        self.pieceDistri['r1'].fill(0)
+                elif piece_type == 'r':
+                    # This is absolute
+                    self.rook_count -= 1
+                    if self.rook_count != 0:
+                        self.pieceDistri['r1'] += self.pieceDistri['r2']
+                        self.pieceDistri['r1'] /= 2
+                        self.pieceDistri['r2'].fill(0)
+                    else:
+                        self.pieceDistri['r1'].fill(0)
+                else:
+                    # Probably gonna be king, but it's not gonna do anything now
+                    pass
+            else:
+                raise Exception("If wasn't seen just now not implemented")
+                
 
     def _move_string_to_idx(self, uci_move_string):
         start = (7 - (int(uci_move_string[1]) - 1), ord(uci_move_string[0]) - 97)
@@ -472,16 +549,3 @@ class EnemyChessBoard:
         print(self.pieceDistri['q'])
         print(np.sum(self.pieceDistri['q']))
 
-testBoard = EnemyChessBoard(ourcolor = chess.BLACK)
-
-print(testBoard.pieceDistri['b1'])
-
-# move = chess.Move.from_uci("a2a4")
-# move2 = chess.Move.from_uci("d2d4")
-
-# k = datetime.datetime.now()
-# testBoard.updateAllyBoard(move)
-# testBoard.updateAllyBoard(move2)
-# for i in range(7):
-#     testBoard.propagate()
-# # testBoard.testEnvironment()
