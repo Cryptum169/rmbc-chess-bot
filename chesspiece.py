@@ -6,10 +6,9 @@ import datetime
 import copy
 from scipy.stats import entropy
 
-EXISTENCE_THRESHOLD = 0.8
-PROPAGATION_THRESHOLD = 0.001
+EXISTENCE_THRESHOLD = 0.9
+PROPAGATION_THRESHOLD = 0.0001
 np.set_printoptions(precision=5, suppress=True)
-
 
 class EnemyChessBoard:
 
@@ -91,10 +90,16 @@ class EnemyChessBoard:
             prob = v[location[0]][location[1]]
             sum += prob
 
+        if sum == 0:
+            sum = 1
+
         for k, v in self.pieceDistri.items():
             prob_at_location = v[location[0]][location[1]]
             post_distri = prob_at_location / sum
             remaining_probability = 1 - post_distri
+            if (1 - prob_at_location) == 0:
+                v[location[0]][location[1]] = 1
+                continue
             v *= (remaining_probability / (1 - prob_at_location))
             v[location[0]][location[1]] = post_distri
 
@@ -109,6 +114,8 @@ class EnemyChessBoard:
         min_entropy = []
 
         for k,v in self.pieceDistri.items():
+            if np.sum(v) == 0:
+                continue
             entro_mat = np.asarray(v).reshape(-1)
             min_entropy.append((entropy(entro_mat), k))
 
@@ -169,6 +176,11 @@ class EnemyChessBoard:
                     prob1 = r1[row][column]
                     prob2 = r2[row][column]
                     sum_rook = prob1 + prob2
+
+                    if sum_rook == 0:
+                        new_prob1 = 1
+                        sum_rook = 1
+
                     new_prob1 = prob1 / sum_rook
                     new_prob2 = prob2 / sum_rook
 
@@ -190,6 +202,11 @@ class EnemyChessBoard:
                     prob1 = n1[row][column]
                     prob2 = n2[row][column]
                     sum_rook = prob1 + prob2
+
+                    if sum_rook == 0:
+                        new_prob1 = 1
+                        sum_rook = 1
+
                     new_prob1 = prob1 / sum_rook
                     new_prob2 = prob2 / sum_rook
 
@@ -362,11 +379,12 @@ class EnemyChessBoard:
                         pass
                 else:
                     max_prob_value = max(prob)
-                    idx = prob.index(max_prob_value)
-                    piece_type = self.chessPiece[idx]
+                    if max_prob_value == 0:
+                        piece_type = 'p4'
+                    else:
+                        idx = prob.index(max_prob_value)
+                        piece_type = self.chessPiece[idx]
                     self.pieceDistri[piece_type].fill(0)
-                    if max_prob_value < 0.1:
-                        exit()
 
     # Done
     def _move_string_to_idx(self, uci_move_string):
