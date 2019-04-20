@@ -27,6 +27,8 @@ class EnemyChessBoard:
 
         self.rook_count = 2
         self.knight_count = 2
+        self.mightBeAlive = dict()
+        self.markedDead = dict()
 
         self.allyCapturedPosition = -1
         self.allyCaptured = False
@@ -49,6 +51,9 @@ class EnemyChessBoard:
             if (self.color == chess.BLACK):
                 initial_distribution = np.rot90(np.rot90(initial_distribution))
             self.pieceDistri[piece] = initial_distribution
+            if piece[0] != 'p':
+                self.mightBeAlive[piece] = 1
+                self.markedDead[piece] = 0
         
         logging.info('Board Initialization Complete')
         logging.info(sum([v for k,v in self.pieceDistri.items()]))
@@ -167,8 +172,11 @@ class EnemyChessBoard:
                     new_prob1 = prob1 / sum_rook
                     new_prob2 = prob2 / sum_rook
 
-                    r1 *= ((1 - prob1) / (1 - new_prob1))
-                    r2 *= ((1 - prob2) / (1 - new_prob2))
+                    if (1 - new_prob1) != 0:
+                        r1 *= ((1 - prob1) / (1 - new_prob1))
+
+                    if (1 - new_prob2) != 0:
+                        r2 *= ((1 - prob2) / (1 - new_prob2))
 
             elif piece.piece_type == chess.KNIGHT:
                 if self.knight_count == 1:
@@ -185,8 +193,11 @@ class EnemyChessBoard:
                     new_prob1 = prob1 / sum_rook
                     new_prob2 = prob2 / sum_rook
 
-                    n1 *= ((1 - prob1) / (1 - new_prob1))
-                    n2 *= ((1 - prob2) / (1 - new_prob2))
+                    if (1 - new_prob1) != 0:
+                        n1 *= ((1 - prob1) / (1 - new_prob1))
+
+                    if (1 - new_prob2) != 0:
+                        n2 *= ((1 - prob2) / (1 - new_prob2))
 
             elif piece.piece_type == chess.QUEEN:
                 # There is only one queen
@@ -264,11 +275,14 @@ class EnemyChessBoard:
                 piece_type = self._current_observation[ind][1].symbol().lower()
                 if piece_type == 'q':
                     self.pieceDistri['q'].fill(0)
+                    self.mightBeAlive['q'] = 0
                 elif piece_type == 'b':
                     if (location[0] + location[1]) % 2 == 0:
                         v = self.pieceDistri['b1']
+                        self.mightBeAlive['b1'] = 0
                     else:
                         v = self.pieceDistri['b2']
+                        self.mightBeAlive['b2'] = 0
                     v.fill(0)
                 elif piece_type == 'p':
                     # This pawn has died
@@ -280,8 +294,10 @@ class EnemyChessBoard:
                         self.pieceDistri['n1'] += self.pieceDistri['n2']
                         self.pieceDistri['n1'] /= 2
                         self.pieceDistri['n2'].fill(0)
+                        self.mightBeAlive['n2'] = 0
                     else:
                         self.pieceDistri['r1'].fill(0)
+                        self.mightBeAlive['n1'] = 0
                 elif piece_type == 'r':
                     # This is absolute
                     self.rook_count -= 1
@@ -289,17 +305,69 @@ class EnemyChessBoard:
                         self.pieceDistri['r1'] += self.pieceDistri['r2']
                         self.pieceDistri['r1'] /= 2
                         self.pieceDistri['r2'].fill(0)
+                        self.mightBeAlive['r2'] = 0
                     else:
                         self.pieceDistri['r1'].fill(0)
+                        self.mightBeAlive['r1'] = 0
                 else:
                     # Probably gonna be king, but it's not gonna do anything now
+                    # Cuz we won?
                     pass
             else:
-                # If not in the observation
-                # Wanna guess who died?
-                
+                prob = [v[location[0]][location[1]] for k, v in self.pieceDistri.items()]
 
-             
+                indices = [i for i, v in enumerate(prob) if v > 0.8]
+                # Very high probability
+                # This should be absolute
+                if len(indices) > 0:
+                    piece_type = self.chessPiece[max(indices)]
+                    # self.pieceDistri[piece_type].fill(0)
+                    if piece_type[0] == 'p':
+                        self.pieceDistri[piece_type].fill(0)
+                    elif piece_type[0] == 'r':
+                        self.rook_count -= 1
+                        if self.rook_count == 0:
+                            self.pieceDistri['r1'].fill(0)
+                            self.mightBeAlive['r1'] = 0
+                        else:
+                            self.pieceDistri['r1'] += self.pieceDistri['r2']
+                            self.pieceDistri['r1'] /= 2
+                            self.pieceDistri['r2'].fill(0)
+                            self.mightBeAlive['r2'] = 0
+                        
+                    elif piece_type == 'n':
+                        self.knight_count -= 1
+                        if self.knight_count == 0:
+                            self.pieceDistri['n1'].fill(0)
+                            self.mightBeAlive['n1'] = 0
+                        else:
+                            self.pieceDistri['n1'] += self.pieceDistri['n2']
+                            self.pieceDistri['n1'] /= 2
+                            self.pieceDistri['n2'].fill(0)
+                            self.mightBeAlive['n2'] = 0
+
+                    elif piece_type == 'q':
+                        self.pieceDistri['q'].fill(0)
+                        self.mightBeAlive['q'] = 0
+                    elif piece_type == 'b':
+                        # bishop
+                        if (location[0] + location[1]) % 2 == 0:
+                            v = self.pieceDistri['b1']
+                            self.mightBeAlive['b1'] = 0
+                        else:
+                            v = self.pieceDistri['b2']
+                            self.mightBeAlive['b2'] = 0
+                        v.fill(0)
+                    else:
+                        pass
+                else:
+                    max_prob_value = max(prob)
+                    idx = prob.index(max_prob_value)
+                    piece_type = self.chessPiece[idx]
+                    self.pieceDistri[piece_type].fill(0)
+                    if max_prob_value < 0.1:
+                        exit()
+
     # Done
     def _move_string_to_idx(self, uci_move_string):
         start = (7 - (int(uci_move_string[1]) - 1), ord(uci_move_string[0]) - 97)
@@ -368,6 +436,8 @@ class EnemyChessBoard:
                 for position in available_move:
                     return_mat[position[0]][position[1]] += prob_of_move * current_dist * split
 
+        if np.sum(return_mat) == 0:
+            return return_mat
         return return_mat / np.sum(return_mat)
     
     # Done
@@ -401,6 +471,8 @@ class EnemyChessBoard:
                 for position in available_move:
                     return_mat[position[0]][position[1]] += prob_of_move * current_dist * split
 
+        if np.sum(return_mat) == 0:
+            return return_mat
         return return_mat / np.sum(return_mat)
 
     # Done
