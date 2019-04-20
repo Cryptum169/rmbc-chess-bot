@@ -23,6 +23,9 @@ class EnemyChessBoard:
         self.pieceDistri = dict()
         self.survivingCount = 16
 
+        self.rook_count = 2
+        self.knight_count = 2
+
         self.allyCaptured = False
 
         empty_board = np.zeros((6,8), dtype = np.float_)
@@ -60,6 +63,32 @@ class EnemyChessBoard:
         location = (location % 8, 7 - (int(location / 8)))
         self.allyBoard[location[0]][location[1]] = 0
 
+        # Handle distribution update in later
+        return
+
+    def postCaptureUpdate(self, location):
+        if not self.allyCaptured:
+            return
+
+        self.allyCaptured = False
+        location = (location % 8, 7 - (int(location / 8)))
+
+        # idk if we need this
+        max_key = ""
+        sum_dist = 0
+
+        for k, v in self.pieceDistri.items():
+            prob = v[location[0]][location[1]]
+            sum += prob
+
+        for k, v in self.pieceDistri.items():
+            prob_at_location = v[location[0]][location[1]]
+            post_distri = prob_at_location / sum
+            remaining_probability = 1 - post_distri
+            v *= (remaining_probability / (1 - prob_at_location))
+
+        return
+
     def updateSensing(self, observation):
         for idx, piece in observation:
             column = idx % 8
@@ -85,11 +114,20 @@ class EnemyChessBoard:
             if piece.piece_type == chess.PAWN:
                 pass
             elif piece.piece_type == chess.BISHOP:
-                pass
+                if (row + column) % 2 == 0:
+                    v = self.pieceDistri['b1']
+                else:
+                    v = self.pieceDistri['b2']
+                v.fill(0)
+                v[row][column] = 1
             elif piece.piece_type == chess.ROOK:
                 pass
             elif piece.piece_type == chess.KNIGHT:
-                pass
+                if self.knight_count == 1:
+                    v = self.pieceDistri['n1']
+                    v.fill(0)
+                    
+
             elif piece.piece_type == chess.QUEEN:
                 # There is only one queen
                 v = self.pieceDistri['q']
@@ -101,7 +139,7 @@ class EnemyChessBoard:
                 v.fill(0)
                 v[row][column] = 1
             else:
-                print("WHAT THE FUCK DID I SEE?")
+                print("WHAT THE HECK DID I SEE?")
 
         # Scale up to normalize and offset difference in between
         for k,v in self.pieceDistri.items():
@@ -141,10 +179,6 @@ class EnemyChessBoard:
 
             self.pieceDistri[item] = updated_distribution
 
-    def allyCapturedNotify(self, location):
-        self.captured = True
-        self.captured_location = location
-
     # Call upon making a move
     def updateAllyBoard(self, move, captured_piece, captured_square):
         if (move is None):
@@ -156,6 +190,8 @@ class EnemyChessBoard:
         self.allyBoard[start[0]][start[1]] = 0
         self.allyBoard[end[0]][end[1]] = 1
         logging.info("Update board:\n{}".format(self.allyBoard))
+
+        # TODO THIS IS NOT DONE YET
 
     def _move_string_to_idx(self, uci_move_string):
         start = (7 - (int(uci_move_string[1]) - 1), ord(uci_move_string[0]) - 97)
@@ -436,7 +472,9 @@ class EnemyChessBoard:
         print(self.pieceDistri['q'])
         print(np.sum(self.pieceDistri['q']))
 
-# testBoard = EnemyChessBoard(ourcolor = chess.WHITE)
+testBoard = EnemyChessBoard(ourcolor = chess.BLACK)
+
+print(testBoard.pieceDistri['b1'])
 
 # move = chess.Move.from_uci("a2a4")
 # move2 = chess.Move.from_uci("d2d4")

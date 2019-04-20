@@ -19,14 +19,10 @@ from chesspiece import EnemyChessBoard
 class MyAgent(Player):
 
     def __init__(self):
-
         self.enemyBoard = None
-
         self.prev_move_result = None
         self.position_of_capture = None
         self.player = None
-
-
         
     def handle_game_start(self, color, board):
         """
@@ -36,10 +32,8 @@ class MyAgent(Player):
         :param board: chess.Board -- initial board state
         :return:
         """
-
         self.enemyBoard = EnemyChessBoard(ourcolor = color)
         self.player = ChessPlay(color)
-
         
     def handle_opponent_move_result(self, captured_piece, captured_square):
         """
@@ -49,8 +43,9 @@ class MyAgent(Player):
         :param captured_square: chess.Square - position where your piece was captured
         """
 
-        self.enemyBoard.propagate()
         self.enemyBoard.updateEnemyMove(captured_piece, captured_square)
+        self.enemyBoard.propagate()
+        self.enemyBoard.postCaptureUpdate()
 
         if captured_piece == True:
             self.player.eliminate(captured_square)
