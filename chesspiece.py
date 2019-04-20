@@ -61,13 +61,11 @@ class EnemyChessBoard:
             elif (piece_type == 'r'):
                 updated_distribution = self.piece_propagate(current_distribution, self._rook_available_moves)
             elif (piece_type == 'b'):
-                continue
-                # updated_distribution = self.piece_propagate(current_distribution, self._biship_available_moves)
+                updated_distribution = self.piece_propagate(current_distribution, self._biship_available_moves)
             elif (piece_type == 'n'):
                 updated_distribution = self.piece_propagate(current_distribution, self._knight_available_moves)
             elif (piece_type == 'q'):
-                continue
-                # updated_distribution = self.piece_propagate(current_distribution, self._queen_available_moves)
+                updated_distribution = self.piece_propagate(current_distribution, self._queen_available_moves)
             elif (piece_type == 'k'):
                 updated_distribution = self.piece_propagate(current_distribution, self._king_available_moves)
             else:
@@ -76,16 +74,14 @@ class EnemyChessBoard:
             self.pieceDistri[item] = updated_distribution
 
     def returnDistribution(self):
-        return copy.deepcopy(self.pieceDistri[item])
+        return copy.deepcopy(self.pieceDistri)
 
     def testEnvironment(self):
-        print(self.pieceDistri['p1'])
-        print(self.pieceDistri['r1'])
-        print(np.sum(self.pieceDistri['n1']))
-        
-        # for item in self.chessPiece:
-        #     if (item[0] == 'p'):
-        #         print(self.pieceDistri[item])
+        print(self.pieceDistri['q'])
+        # print(self.pieceDistri['p2'])
+        # print(self.pieceDistri['r1'])
+        print(np.sum(self.pieceDistri['q']))
+
 
     def allyCapturedNotify(self, location):
         self.captured = True
@@ -113,11 +109,22 @@ class EnemyChessBoard:
             step = 1
 
         candidate_location = [(location[0] + step,location[1])]
+
+        location1 = location[1] - 1
+        location2 = location[1] + 1
+        if location1 > -1:
+            if self.allyBoard[location[0] + step, location1] == 1:
+                candidate_location.append((location[0] + step, location1))
+
+        if location2 < 8:
+            if self.allyBoard[location[0] + step, location2] == 1:
+                candidate_location.append((location[0] + step, location2))
+
         ret_location = []
         if location[0] == 1 and step == 1 or location[0] == 6 and step == -1:
             candidate_location.append((location[0] + step * 2, location[1]))
 
-        return self._check_possibility(candidate_location)
+        return self._check_possibility(candidate_location, pawn = True)
 
     def _pawn_propagate(self, distri):
         # Diagonal Case Handled else where
@@ -193,7 +200,6 @@ class EnemyChessBoard:
             step = 1
 
         for left_idx in reversed(range(0, location[0])):
-            
             result = 1
             for k, v in self.pieceDistri.items():
                 if (v[left_idx][location[1]] > EXISTENCE_THRESHOLD):
@@ -261,18 +267,59 @@ class EnemyChessBoard:
         movement = [-2,-1,1,2]
         for x_movement in movement:
             for y_movement in movement:
-                if y_movement == x_movement:
+                if abs(y_movement) == abs(x_movement):
                     continue
                 
                 candidate_location.append((location[0] + x_movement, location[1] + y_movement))
 
         return self._check_possibility(candidate_location)
     
-    def _biship_available_moves(self):
-        return []
+    def _biship_available_moves(self, location):
+        candidate_location = []
+
+        new_location = (0,0)
+        for x in range(1, location[0]):
+            new_location = (location[0] - x, location[1] - x)
+            if new_location[0] > -1 and new_location[1] > -1:
+                for k,v in self.pieceDistri.items():
+                    if v[new_location[0]][new_location[1]] < EXISTENCE_THRESHOLD:
+                        candidate_location.append(new_location)
+            else:
+                break;
+
+        for x in range(1, location[0]):
+            new_location = (location[0] - x, location[1] + x)
+            if new_location[0] > -1 and new_location[1] < 8:
+                for k,v in self.pieceDistri.items():
+                    if v[new_location[0]][new_location[1]] < EXISTENCE_THRESHOLD:
+                        candidate_location.append(new_location)
+            else:
+                break;
+
+        for x in range(location[0] + 1, 7):
+            new_location = (location[0] + x, location[1] + x)
+            if new_location[0] < 8 and new_location[1] < 8:
+                for k,v in self.pieceDistri.items():
+                    if v[new_location[0]][new_location[1]] < EXISTENCE_THRESHOLD:
+                        candidate_location.append(new_location)
+            else:
+                break;
+
+        for x in range(location[0] + 1, 7):
+            new_location = (location[0] + x, location[1] - x)
+            if new_location[0] < 8 and new_location[1] > -1:
+                for k,v in self.pieceDistri.items():
+                    if v[new_location[0]][new_location[1]] < EXISTENCE_THRESHOLD:
+                        candidate_location.append(new_location)
+            else:
+                break;
+
+        return self._check_possibility(candidate_location)
     
-    def _queen_available_moves(self):
-        return []
+    def _queen_available_moves(self, location):
+        diag = self._biship_available_moves(location)
+        grid = self._rook_available_moves(location)
+        return grid + diag
 
     def _king_available_moves(self, location):
         # First of all, king is very unlikely to move until danger close
@@ -285,8 +332,12 @@ class EnemyChessBoard:
 
         return self._check_possibility(candidate_locations)
 
-    def _check_possibility(self, candidate_locations):
+    def _check_possibility(self, candidate_locations, pawn = False):
         return_list = []
+
+        if pawn:
+            column = candidate_locations[0][1]
+
         for x,y in candidate_locations:
             if x > 7 or x < 0 or y < 0 or y > 7:
                 continue
@@ -298,7 +349,11 @@ class EnemyChessBoard:
                     break
 
             if (self.allyBoard[x][y] == 1):
-                result = 0
+                if not pawn:
+                    result = 0
+                else:
+                    if y == column:
+                        result = 0
 
             if result == 1:
                 return_list.append((x,y))
@@ -318,6 +373,6 @@ move2 = chess.Move.from_uci("d2d4")
 k = datetime.datetime.now()
 testBoard.updateAllyBoard(move)
 testBoard.updateAllyBoard(move2)
-for i in range(70):
+for i in range(7):
     testBoard.propagate()
 testBoard.testEnvironment()

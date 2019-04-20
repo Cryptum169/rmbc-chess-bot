@@ -53,8 +53,6 @@ class MyAgent(Player):
         :example: choice = chess.A1
         """
         # TODO: update this method
-        print("Possible Sense")
-        print(possible_sense)
         return random.choice(possible_sense)
         
     def handle_sense_result(self, sense_result):
@@ -73,8 +71,6 @@ class MyAgent(Player):
         """
         # TODO: implement this method
         # Hint: until this method is implemented, any senses you make will be lost.
-        print("Sense Result")
-        print(sense_result)
         pass
 
     def choose_move(self, possible_moves, seconds_left):
@@ -92,7 +88,7 @@ class MyAgent(Player):
         """
         # TODO: update this method
         choice = random.choice(possible_moves)
-        print(type(choice))
+        print(possible_moves)
         exit()
         return choice
         
