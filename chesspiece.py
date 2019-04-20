@@ -22,6 +22,8 @@ class EnemyChessBoard:
         self.pieceDistri = dict()
         self.survivingCount = 16
 
+        self.allyCaptured = False
+
         empty_board = np.zeros((6,8), dtype = np.float_)
         occupied_space = np.ones((2,8), dtype = np.float_)
         self.allyBoard = np.concatenate((empty_board,occupied_space), axis = 0)
@@ -45,8 +47,29 @@ class EnemyChessBoard:
     def generateLookup(self):
         pass
 
-    def update(self, observation):
-        self.captured = False
+    def updateEnemyMove(self, captured, location):
+        if not captured:
+            return
+
+        self.allyCaptured = True
+
+        # Update Ally Situation
+        # Not gonna die in vain my dude
+        self.allyBoard[location[0]][location[1]] = 0
+
+    def updateSensing(self, observation):
+        for idx, piece in observation:
+            column = idx % 8
+            row = 7 - (int(idx / 8) - 1)
+
+            if piece == None:
+                
+
+    def generateSensing(self):
+        pass
+
+    def returnDistribution(self):
+        return copy.deepcopy(self.pieceDistri)
 
     # Propagate Distribution
     def propagate(self):
@@ -73,16 +96,6 @@ class EnemyChessBoard:
 
             self.pieceDistri[item] = updated_distribution
 
-    def returnDistribution(self):
-        return copy.deepcopy(self.pieceDistri)
-
-    def testEnvironment(self):
-        print(self.pieceDistri['q'])
-        # print(self.pieceDistri['p2'])
-        # print(self.pieceDistri['r1'])
-        print(np.sum(self.pieceDistri['q']))
-
-
     def allyCapturedNotify(self, location):
         self.captured = True
         self.captured_location = location
@@ -97,8 +110,8 @@ class EnemyChessBoard:
         logging.info("Update board:\n{}".format(self.allyBoard))
 
     def _move_string_to_idx(self, uci_move_string):
-        start = (int(uci_move_string[1]), ord(uci_move_string[0]) - 97)
-        end = (int(uci_move_string[3]), ord(uci_move_string[2]) - 97)
+        start = (7 - (int(uci_move_string[1]) - 1), ord(uci_move_string[0]) - 97)
+        end = (7 - (int(uci_move_string[3]) - 1), ord(uci_move_string[2]) - 97)
         return (start, end)
 
     def _pawn_available_moves(self, location):
@@ -362,8 +375,14 @@ class EnemyChessBoard:
     def biasFunction(self, location):
         return random.uniform(0.5,1)
 
+    # Deprecated
     def boardBound(self, value):
         return min(max(value, 0), 7)
+
+    def testEnvironment(self):
+        print(self.pieceDistri['q'])
+        print(np.sum(self.pieceDistri['q']))
+
 
 testBoard = EnemyChessBoard(ourcolor = chess.WHITE)
 
@@ -375,4 +394,4 @@ testBoard.updateAllyBoard(move)
 testBoard.updateAllyBoard(move2)
 for i in range(7):
     testBoard.propagate()
-testBoard.testEnvironment()
+# testBoard.testEnvironment()
