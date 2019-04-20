@@ -13,6 +13,7 @@ np.set_printoptions(precision=5, suppress=True)
 
 class EnemyChessBoard:
 
+    # Done
     def __init__(self, ourcolor):
         logging.basicConfig(filename='debug.log',level=logging.DEBUG)
         # Color of us
@@ -29,6 +30,8 @@ class EnemyChessBoard:
 
         self.allyCapturedPosition = -1
         self.allyCaptured = False
+
+        self.lastSense = None
 
         empty_board = np.zeros((6,8), dtype = np.float_)
         occupied_space = np.ones((2,8), dtype = np.float_)
@@ -50,9 +53,11 @@ class EnemyChessBoard:
         logging.info('Board Initialization Complete')
         logging.info(sum([v for k,v in self.pieceDistri.items()]))
 
+    # Done
     def getColor(self):
         return copy.copy(self.color)
         
+    # Done
     def updateEnemyMove(self, captured, location):
         if not captured:
             return
@@ -62,10 +67,10 @@ class EnemyChessBoard:
         self.allyCaptured = True
         location = (location % 8, 7 - (int(location / 8)))
         self.allyBoard[location[0]][location[1]] = 0
-
-        # Handle distribution update in later
+        # Handle distribution update in later methods
         return
 
+    # Done
     def postCaptureUpdate(self, location):
         if not self.allyCaptured:
             return
@@ -86,9 +91,11 @@ class EnemyChessBoard:
             post_distri = prob_at_location / sum
             remaining_probability = 1 - post_distri
             v *= (remaining_probability / (1 - prob_at_location))
+            v[location[0]][location[1]] = post_distri
 
         return
 
+    # Done
     def generateSensing(self):
         if self.allyCaptured:
             self.allyCaptured = False
@@ -104,11 +111,14 @@ class EnemyChessBoard:
         keyValue = max(min_entropy, key = lambda item:item[0])[1]
         matrix = self.pieceDistri[keyValue]
         ind = np.unravel_index(np.argmax(matrix, axis=None), matrix.shape)
-        print(keyValue)
-        print(chess.square(file_index = ind[1], rank_index = 7 - ind[0]))
+        this_sense = chess.square(file_index = ind[1], rank_index = 7 - ind[0])
+        if this_sense == self.lastSense:
+            return None
+        else:
+            self.lastSense = this_sense
+            return this_sense
 
-        return chess.square(file_index = ind[1], rank_index = 7 - ind[0])
-
+    # Done
     def updateSensing(self, observation):
         self._current_observation = observation
         for idx, piece in observation:
@@ -132,8 +142,9 @@ class EnemyChessBoard:
                 continue
 
             if piece.piece_type == chess.PAWN:
-                
-                # raise Exception("Pawn Update not yet implemented!")
+                v = self.pieceDistri['p' + str(column + 1)]
+                v.fill(0)
+                v[row][column] = 1
             elif piece.piece_type == chess.BISHOP:
                 if (row + column) % 2 == 0:
                     v = self.pieceDistri['b1']
@@ -142,14 +153,22 @@ class EnemyChessBoard:
                 v.fill(0)
                 v[row][column] = 1
             elif piece.piece_type == chess.ROOK:
-                # raise Exception("Pawn Update not yet implemented!")
-
                 if self.rook_count == 1:
                     v = self.pieceDistri['r1']
                     v.fill(0)
                     v[row][column] = 1
                 else:
-                    pass
+                    r1 = self.pieceDistri['r1']
+                    r2 = self.pieceDistri['r2']
+
+                    prob1 = r1[row][column]
+                    prob2 = r2[row][column]
+                    sum_rook = prob1 + prob2
+                    new_prob1 = prob1 / sum_rook
+                    new_prob2 = prob2 / sum_rook
+
+                    r1 *= ((1 - prob1) / (1 - new_prob1))
+                    r2 *= ((1 - prob2) / (1 - new_prob2))
 
             elif piece.piece_type == chess.KNIGHT:
                 if self.knight_count == 1:
@@ -157,7 +176,17 @@ class EnemyChessBoard:
                     v.fill(0)
                     v[row][column] = 1
                 else:
-                    pass
+                    n1 = self.pieceDistri['n1']
+                    n2 = self.pieceDistri['n2']
+
+                    prob1 = n1[row][column]
+                    prob2 = n2[row][column]
+                    sum_rook = prob1 + prob2
+                    new_prob1 = prob1 / sum_rook
+                    new_prob2 = prob2 / sum_rook
+
+                    n1 *= ((1 - prob1) / (1 - new_prob1))
+                    n2 *= ((1 - prob2) / (1 - new_prob2))
 
             elif piece.piece_type == chess.QUEEN:
                 # There is only one queen
@@ -174,16 +203,17 @@ class EnemyChessBoard:
 
         # Scale up to normalize and offset difference in between
         for k,v in self.pieceDistri.items():
-            # if np.sum(v) == 0:
-                # print(v)
+            if np.sum(v) == 0:
+                continue
             v /= np.sum(v)
         
         return
 
+    # Done
     def returnDistribution(self):
         return copy.deepcopy(self.pieceDistri)
 
-    # Propagate Distribution
+    # Done
     def propagate(self):
         for item in self.chessPiece:
             current_distribution = self.pieceDistri[item]
@@ -220,8 +250,6 @@ class EnemyChessBoard:
         self.allyBoard[start[0]][start[1]] = 0
         self.allyBoard[end[0]][end[1]] = 1
         logging.info("Update board:\n{}".format(self.allyBoard))
-
-        # TODO THIS IS NOT DONE YET
 
         # If in this observation
         if captured_piece:
@@ -267,14 +295,18 @@ class EnemyChessBoard:
                     # Probably gonna be king, but it's not gonna do anything now
                     pass
             else:
-                raise Exception("If wasn't seen just now not implemented")
+                # If not in the observation
+                # Wanna guess who died?
                 
 
+             
+    # Done
     def _move_string_to_idx(self, uci_move_string):
         start = (7 - (int(uci_move_string[1]) - 1), ord(uci_move_string[0]) - 97)
         end = (7 - (int(uci_move_string[3]) - 1), ord(uci_move_string[2]) - 97)
         return (start, end)
 
+    # Done
     def _pawn_available_moves(self, location):
         return_list = []
         if (self.color == chess.BLACK):
@@ -304,6 +336,7 @@ class EnemyChessBoard:
 
         return self._check_possibility(candidate_location, pawn = True)
 
+    # Done
     def _pawn_propagate(self, distri):
         # Diagonal Case Handled else where
         if (self.color == chess.BLACK):
@@ -337,6 +370,7 @@ class EnemyChessBoard:
 
         return return_mat / np.sum(return_mat)
     
+    # Done
     def piece_propagate(self, distri, selection_algorithm):
         if (self.color == chess.BLACK):
             iterator = list(reversed(range(8)))
@@ -369,6 +403,7 @@ class EnemyChessBoard:
 
         return return_mat / np.sum(return_mat)
 
+    # Done
     def _rook_available_moves(self, location):
         return_list = []
 
@@ -440,6 +475,7 @@ class EnemyChessBoard:
 
         return return_list
 
+    # Done
     def _knight_available_moves(self, location):
         candidate_location = []
         movement = [-2,-1,1,2]
@@ -452,6 +488,7 @@ class EnemyChessBoard:
 
         return self._check_possibility(candidate_location)
     
+    # Done
     def _biship_available_moves(self, location):
         candidate_location = []
 
@@ -494,11 +531,13 @@ class EnemyChessBoard:
 
         return self._check_possibility(candidate_location)
     
+    # Done
     def _queen_available_moves(self, location):
         diag = self._biship_available_moves(location)
         grid = self._rook_available_moves(location)
         return grid + diag
 
+    # Done
     def _king_available_moves(self, location):
         # First of all, king is very unlikely to move until danger close
         # IDK, danger close implement later ?
@@ -510,6 +549,7 @@ class EnemyChessBoard:
 
         return self._check_possibility(candidate_locations)
 
+    # Done
     def _check_possibility(self, candidate_locations, pawn = False):
         return_list = []
 
@@ -537,6 +577,7 @@ class EnemyChessBoard:
                 return_list.append((x,y))
         return return_list
 
+    # Done
     def biasFunction(self, location):
         return random.uniform(0.5,1)
 
@@ -544,7 +585,7 @@ class EnemyChessBoard:
     def boardBound(self, value):
         return min(max(value, 0), 7)
 
-    # Do not enable during testing
+    # Done
     def testEnvironment(self):
         print(self.pieceDistri['q'])
         print(np.sum(self.pieceDistri['q']))
