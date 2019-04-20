@@ -18,7 +18,10 @@ from player import Player
 class MyAgent(Player):
 
     def __init__(self):
-        pass
+        self.prev_move_result = None
+        self.position_of_capture = None
+        self.player = None
+
         
     def handle_game_start(self, color, board):
         """
@@ -29,7 +32,7 @@ class MyAgent(Player):
         :return:
         """
         # TODO: implement this method
-        pass
+        self.player = ChessPlay(color)
         
     def handle_opponent_move_result(self, captured_piece, captured_square):
         """
@@ -38,8 +41,8 @@ class MyAgent(Player):
         :param captured_piece: bool - true if your opponents captured your piece with their last move
         :param captured_square: chess.Square - position where your piece was captured
         """
-        
-        pass
+        if captured_piece == True:
+            self.player.eliminate(captured_square)
 
     def choose_sense(self, possible_sense, possible_moves, seconds_left):
         """
@@ -91,9 +94,14 @@ class MyAgent(Player):
         :example: choice = chess.Move(chess.G7, chess.G8, promotion=chess.KNIGHT) *default is Queen
         """
         # TODO: update this method
+        '''
         choice = random.choice(possible_moves)
         print(type(choice))
         exit()
+        '''
+        if seconds_left <2:
+            return random.choice(possible_moves)
+        choose = self.player.decision_make(possible_moves)
         return choice
         
     def handle_move_result(self, requested_move, taken_move, reason, captured_piece, captured_square):
