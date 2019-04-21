@@ -3,6 +3,13 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+*.txt
+*.aux
+*.out
+*.fls
+*.fdb_latexmk
+report/report.synctex.gz
+
 # C extensions
 *.so
 
@@ -102,3 +109,5 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+.DS_Store

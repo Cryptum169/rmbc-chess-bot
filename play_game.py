@@ -101,8 +101,8 @@ def play_turn(game, player, turn, move_number, output, output_true):
     # play move action
     move = player.choose_move(possible_moves, game.get_seconds_left())
     requested_move, taken_move, captured_square, reason = game.handle_move(move)
-    player.handle_move_result(requested_move, taken_move, captured_square is not None,
-                              captured_square, reason)
+    player.handle_move_result(requested_move, taken_move, reason, captured_square is not None,
+                              captured_square)
 
     output.write("##################################--Move requested: {} -- Move taken: {}\n".format(requested_move, taken_move))
     output_true.write("##################################--Move requested: {} -- Move taken: {}\n\n".format(requested_move, taken_move))

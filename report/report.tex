@@ -1,0 +1,96 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath}
+\usepackage{listings}
+\usepackage{afterpage}
+\usepackage{tikz, pgfplots}
+% \usepackage{subfig}
+\usepackage{multirow}
+
+\pgfplotsset{compat = 1.3}
+\pgfkeys{/pgfplots/scale/.style={
+  x post scale=#1,
+  y post scale=#1,
+  z post scale=#1}
+}
+
+\usepackage{subcaption}
+\usepackage{hyperref}
+
+% Paper layout setup
+\usepackage{geometry}
+\linespread{1}
+\geometry{letterpaper, portrait, margin=1in}
+
+%table setup
+\usepackage{booktabs}
+
+% Graphics 
+\usepackage{graphicx}
+\graphicspath{ {images/} }
+\setlength{\belowcaptionskip}{-17pt}
+
+%Title page config
+\usepackage{titling}
+\setlength{\droptitle}{5cm}
+\newcommand{\subtitle}[1]{
+  \posttitle{
+    \par\end{center}
+    \begin{center}\large#1\end{center}
+    \vskip0.5em}
+}
+
+% Hide Subsubsection
+\setcounter{tocdepth}{2}
+
+% Title
+\title{A Heuristic Depth-Limited Search Agent based on Markov Bayesian
+Probability Inference for Recon Blind Multi-Chess}
+\author{Zhangqi Liu, Ruoyang Xu}
+\subtitle{CS 4649: Robot Intelligence: Planning}
+\date{Last Edited: \today}
+
+% Document Setup
+\begin{document}
+\maketitle
+\pagebreak
+
+\section*{Executive Summary}
+\paragraph{Proposed Method}
+
+\paragraph{Details of the Approach}
+
+\paragraph{Rationale and Result}
+
+\section*{Contributions}
+We divided the project into two parts: sensing and decision making. We agreed
+to encapsulate our code in a way that it would require minimum interfacing
+during code integration, which resulted in two individual files: chesspiece.py
+and chessplay.py, whereas my\_agent.py calls the two files. This practice is to
+ensure code readability in my\_agent.py.\vspace{6pt}\\
+Since we both think the other partner's part is more difficult to implement,
+we consider this project as equally contributed.
+
+\paragraph{Liu ZHangqi} \textbf{FILL in HERE}
+\paragraph{Ruoyang Xu} Responsible for the sensing part of the agent. Coded the
+entirety of chesspiece.py, the python instantiation of the sensing model for
+our agent. Notable contributions include: I wrote an available moves function
+for all the chess piece at any position used for propagation of probability that
+any piece is at any location, which is kept as 16 numpy matrices. The
+chess.Board class is not used due to the immense number of boards I would have
+instantiate to keep for each possibility (16 pieces $\times$ 8 $\times$ 8
+chess.Board objects that each keeps a 8 $\times$ 8 chess board vs a 16 by 8 by
+8 matrix). I wrote the move result update for extrapolating if any particular
+chess piece is killed and/or at any particular position. I also wrote the
+sensing decision process in that aims to acquire maximize information by
+targeting the location with max entropy.
+
+
+% IDK GOMBOLAY'S PPT?
+\begin{thebibliography}{9}
+    \bibitem{cancer} 
+    Author
+    \textit{"place holder"}. 
+    SIAM News, Volume 23, Number 5, September 1990, pp 1 \& 18. 
+\end{thebibliography}
+
+\end{document}
