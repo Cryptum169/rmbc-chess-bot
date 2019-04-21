@@ -158,10 +158,10 @@ class ChessPlay:
 		#n = Node(out, enemy_status)
 		return out, enemy_status
 
-	def init_tree(self, possible_moves,pd,tlimit = 20):
+	def init_tree(self, possible_moves,pd, tlimit = 20):
 		# init minmax tree with scorring
 		self.time_check = time.time()
-		self.time_limit = tlimit
+		self.time_limit = min(20, tlimit / 20)
 		board, enemy_status = self.form_board_node(pd)
 		my_status = dict(self.pieces_status)
 		# match possible moves to pin
@@ -554,8 +554,7 @@ class ChessPlay:
 	def counter_attack(self):
 		self.scan_attacker(self.deadpos)
 
-	def decision_make(self, possible_moves,pd, remaining_time):
-		self.time_limit = min(self.time_limit, remaining_time / 20)
+	def decision_make(self, possible_moves,pd, seconds_left):
 		action = None
 		try:
 			#if scan king
@@ -569,7 +568,7 @@ class ChessPlay:
 				else:
 					self.killed = 0
 					self.deadpos = None
-			_, action =self.init_tree(possible_moves, pd)
+			_, action = self.init_tree(possible_moves, pd, seconds_left)
 					
 		except :
 			#random move

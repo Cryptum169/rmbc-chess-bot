@@ -109,7 +109,6 @@ class MaybeBetterThanRandom(Player):
         :condition: If you intend to move a pawn for promotion other than Queen, please specify the promotion parameter
         :example: choice = chess.Move(chess.G7, chess.G8, promotion=chess.KNIGHT) *default is Queen
         """
-
         try:
             choose = self.player.decision_make(possible_moves, self.enemyBoard.returnDistribution(), seconds_left)
             
