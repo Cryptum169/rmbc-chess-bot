@@ -63,8 +63,7 @@ class EnemyChessBoard:
             row = 7 - (int(idx / 8) - 1)
 
             if piece == None:
-                
-
+                pass
     def generateSensing(self):
         pass
 

@@ -13,7 +13,7 @@ import random
 import chess
 from player import Player
 from chesspiece import EnemyChessBoard
-
+from chessplay import ChessPlay
 
 # TODO: Rename this class to what you would like your bot to be named during the game.
 class MyAgent(Player):
@@ -40,7 +40,10 @@ class MyAgent(Player):
         self.enemyBoard = EnemyChessBoard(ourcolor = color)
 
         # TODO: implement this method
-        self.player = ChessPlay(color)
+        c = 'w'
+        if color == chess.BLACK:
+            c = 'b'
+        self.player = ChessPlay(c)
 
         
     def handle_opponent_move_result(self, captured_piece, captured_square):
@@ -112,11 +115,18 @@ class MyAgent(Player):
         print(type(choice))
         exit()
         '''
+        print(possible_moves)
         if seconds_left <2:
             return random.choice(possible_moves)
-        choose = self.player.decision_make(possible_moves)
-
-        return choice
+        choose = self.player.decision_make(possible_moves, self.enemyBoard.returnDistribution())
+        #translate tuple to chess.Move
+        tanslator = ['A','B','C','D','E','F','G','H']
+        print(choose)
+        move = tanslator[choose[0][1]] + str(8-choose[0][0])+tanslator[choose[1][1]]+str(8-choose[1][0])
+        print(move[:2],move[2:])
+        src = eval("chess."+move[:2])
+        to = eval("chess."+move[2:])
+        return chess.Move(src,to)
         
     def handle_move_result(self, requested_move, taken_move, reason, captured_piece, captured_square):
         """
@@ -130,6 +140,9 @@ class MyAgent(Player):
         :param captured_square: chess.Square - position where you captured the piece
         """
         # TODO: implement this method
+        print("expected: ", requested_move)
+        print("actual: ", taken_move)
+        self.player.update(taken_move)
         self.enemyBoard.updateAllyBoard(taken_move, captured_piece, captured_square)
         
     def handle_game_end(self, winner_color, win_reason):  # possible GameHistory object...
