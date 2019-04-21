@@ -1,6 +1,5 @@
 import numpy as np
 import random
-import traceback
 from movement import *
 import time
 pieces  =['k','p1','p2','p3','p4','p5','p6','p7','p8','b1','b2','n1','n2','r1','r2','q']
@@ -102,7 +101,6 @@ class ChessPlay:
 			self.killed = 1
 			self.dead_pos = l
 		except :
-			traceback.print_exc()
 			self.onConflict = 1
 			#exit()
 	def update(self, move):
@@ -121,7 +119,6 @@ class ChessPlay:
 				self.current_board[to[0]][to[1]] = 'q'+ p
 				self.pieces_status[self.current_board[to[0]][to[1]]] = to
 		except :
-			traceback.print_exc()
 			self.onConflict = 1
 			#exit()
 
@@ -572,7 +569,6 @@ class ChessPlay:
 					
 		except :
 			#random move
-			traceback.print_exc()
 			self.onConflict = True
 			return None
 			

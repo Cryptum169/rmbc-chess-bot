@@ -1,18 +1,19 @@
 import os
 
-path = "GameHistory/"
+path = "GameHistory2/"
 
 win = []
 lose_timeout = []
 lose_king = []
 
 for filename in os.listdir(path):
+    print(filename)
     if filename[-13] == 'u':
         continue
     with open(path + filename) as file:
         result = file.readlines()[-1]
         winner = result[0:5]
-        if winner == 'WHITE':
+        if winner == 'BLACK':
             win.append(filename)
         else:
             reason = result[-8:-1]
