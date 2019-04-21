@@ -209,6 +209,8 @@ class ChessPlay:
 				if not board[loc_end[0]][loc_end[1]] == 0 and board[loc_end[0]][loc_end[1]][0] == 'e':
 					kill = True
 					enemy_status[board[loc_end[0]][loc_end[1]]] = 0
+					killed = board[loc_end[0]][loc_end[1]]
+
 					#print("凉了1")
 				elif not board[loc_end[0]][loc_end[1]] == 0:
 					#print("凉了2")
