@@ -11,6 +11,7 @@ Source:         Adapted from recon-chess (https://pypi.org/project/reconchess/)
 
 import random
 import chess
+# from chessplay import ChessPlay
 from player import Player
 from chesspiece import EnemyChessBoard
 from chessplay import ChessPlay
@@ -19,14 +20,10 @@ from chessplay import ChessPlay
 class MyAgent(Player):
 
     def __init__(self):
-
         self.enemyBoard = None
-
         self.prev_move_result = None
         self.position_of_capture = None
         self.player = None
-
-
         
     def handle_game_start(self, color, board):
         """
@@ -36,7 +33,6 @@ class MyAgent(Player):
         :param board: chess.Board -- initial board state
         :return:
         """
-
         self.enemyBoard = EnemyChessBoard(ourcolor = color)
 
         # TODO: implement this method
@@ -54,8 +50,9 @@ class MyAgent(Player):
         :param captured_square: chess.Square - position where your piece was captured
         """
 
-        self.enemyBoard.propagate()
         self.enemyBoard.updateEnemyMove(captured_piece, captured_square)
+        self.enemyBoard.propagate()
+        self.enemyBoard.postCaptureUpdate(captured_square)
 
         if captured_piece == True:
             self.player.eliminate(captured_square)
@@ -115,18 +112,24 @@ class MyAgent(Player):
         print(type(choice))
         exit()
         '''
-        print(possible_moves)
-        if seconds_left <2:
+
+        #print(possible_moves)
+        try:
+            choose = self.player.decision_make(possible_moves, self.enemyBoard.returnDistribution())
+            if choose == None:
+                return random.choice(possible_moves)
+            #translate tuple to chess.Move
+            tanslator = ['A','B','C','D','E','F','G','H']
+            #print(choose)
+            move = tanslator[choose[0][1]] + str(8-choose[0][0])+tanslator[choose[1][1]]+str(8-choose[1][0])
+            #print(move[:2],move[2:])
+            src = eval("chess."+move[:2])
+            to = eval("chess."+move[2:])
+
+            return chess.Move(src,to)
+        except:
             return random.choice(possible_moves)
-        choose = self.player.decision_make(possible_moves, self.enemyBoard.returnDistribution())
-        #translate tuple to chess.Move
-        tanslator = ['A','B','C','D','E','F','G','H']
-        print(choose)
-        move = tanslator[choose[0][1]] + str(8-choose[0][0])+tanslator[choose[1][1]]+str(8-choose[1][0])
-        print(move[:2],move[2:])
-        src = eval("chess."+move[:2])
-        to = eval("chess."+move[2:])
-        return chess.Move(src,to)
+
         
     def handle_move_result(self, requested_move, taken_move, reason, captured_piece, captured_square):
         """
@@ -140,8 +143,8 @@ class MyAgent(Player):
         :param captured_square: chess.Square - position where you captured the piece
         """
         # TODO: implement this method
-        print("expected: ", requested_move)
-        print("actual: ", taken_move)
+        #print("expected: ", requested_move)
+        #print("actual: ", taken_move)
         self.player.update(taken_move)
         self.enemyBoard.updateAllyBoard(taken_move, captured_piece, captured_square)
         

@@ -101,7 +101,7 @@ def possible_king_move(board, pos):
 def possible_knight_move(board, pos):
 	out = [] 
 	if board[pos[0]][pos[1]] in ['n1','n2']:
-		for delta in [(2,1),(1,2),(2,-1),(-1,2),(-2,1),(-2,-1),(1,-2),(-1,-2)]:
+		for dr, dc in [(2,1),(1,2),(2,-1),(-1,2),(-2,1),(-2,-1),(1,-2),(-1,-2)]:
 			pos_r = pos[0]
 			pos_c = pos[1]
 			pos_r += dr
