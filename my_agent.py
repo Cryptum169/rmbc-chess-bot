@@ -2,22 +2,21 @@
 
 """
 File Name:      my_agent.py
-Authors:        TODO: Your names here!
-Date:           TODO: The date you finally started working on this.
+Authors:        Zhangqi Liu, Ruoyang Xu
+Date:           2019.4.14
 
-Description:    Python file for my agent.
+Description:    Python wrapper for our sensing and motion agent.
 Source:         Adapted from recon-chess (https://pypi.org/project/reconchess/)
 """
 
 import random
 import chess
-# from chessplay import ChessPlay
 from player import Player
 from chesspiece import EnemyChessBoard
 from chessplay import ChessPlay
 
 # TODO: Rename this class to what you would like your bot to be named during the game.
-class MyAgent(Player):
+class MaybeBetterThanRandom(Player):
 
     def __init__(self):
         self.enemyBoard = None
@@ -34,8 +33,6 @@ class MyAgent(Player):
         :return:
         """
         self.enemyBoard = EnemyChessBoard(ourcolor = color)
-
-        # TODO: implement this method
         c = 'w'
         if color == chess.BLACK:
             c = 'b'
@@ -49,10 +46,12 @@ class MyAgent(Player):
         :param captured_piece: bool - true if your opponents captured your piece with their last move
         :param captured_square: chess.Square - position where your piece was captured
         """
-
-        self.enemyBoard.updateEnemyMove(captured_piece, captured_square)
-        self.enemyBoard.propagate()
-        self.enemyBoard.postCaptureUpdate(captured_square)
+        try:
+            self.enemyBoard.updateEnemyMove(captured_piece, captured_square)
+            self.enemyBoard.propagate()
+            self.enemyBoard.postCaptureUpdate(captured_square)
+        except:
+            pass
 
         if captured_piece == True:
             self.player.eliminate(captured_square)
@@ -68,11 +67,13 @@ class MyAgent(Player):
         :return: chess.SQUARE -- the center of 3x3 section of the board you want to sense
         :example: choice = chess.A1
         """
-
-        sensing_location = self.enemyBoard.generateSensing()
-        if sensing_location in possible_sense:
-            return sensing_location
-        else:
+        try:
+            sensing_location = self.enemyBoard.generateSensing()
+            if sensing_location in possible_sense:
+                return sensing_location
+            else:
+                return random.choice(possible_sense)
+        except:
             return random.choice(possible_sense)
 
         
@@ -90,7 +91,10 @@ class MyAgent(Player):
             (A6, None), (B6, None), (C8, None)
         ]
         """
-        self.enemyBoard.updateSensing(sense_result)
+        try:
+            self.enemyBoard.updateSensing(sense_result)
+        except:
+            pass
 
     def choose_move(self, possible_moves, seconds_left):
         """
@@ -105,17 +109,10 @@ class MyAgent(Player):
         :condition: If you intend to move a pawn for promotion other than Queen, please specify the promotion parameter
         :example: choice = chess.Move(chess.G7, chess.G8, promotion=chess.KNIGHT) *default is Queen
         """
-        # TODO: update this method
-        '''
-        choice = random.choice(possible_moves)
 
-        print(type(choice))
-        exit()
-        '''
-
-        #print(possible_moves)
         try:
-            choose = self.player.decision_make(possible_moves, self.enemyBoard.returnDistribution())
+            choose = self.player.decision_make(possible_moves, self.enemyBoard.returnDistribution(), seconds_left)
+            
             if choose == None:
                 return random.choice(possible_moves)
             #translate tuple to chess.Move
@@ -142,11 +139,11 @@ class MyAgent(Player):
         :param captured_piece: bool - true if you captured your opponents piece
         :param captured_square: chess.Square - position where you captured the piece
         """
-        # TODO: implement this method
-        #print("expected: ", requested_move)
-        #print("actual: ", taken_move)
-        self.player.update(taken_move)
-        self.enemyBoard.updateAllyBoard(taken_move, captured_piece, captured_square)
+        try:
+            self.player.update(taken_move)
+            self.enemyBoard.updateAllyBoard(taken_move, captured_piece, captured_square)
+        except:
+            pass
         
     def handle_game_end(self, winner_color, win_reason):  # possible GameHistory object...
         """

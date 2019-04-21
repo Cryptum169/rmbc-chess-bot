@@ -24,8 +24,6 @@ R2 = 14
 Q = 16
 class Node:
 	def __init__(self,board):
-		#self.status = status
-		#self.board = board 
 		self.color = None
 		self.score = 0
 		self.children = []
@@ -42,7 +40,6 @@ class ChessPlay:
 		self.pieces_status = dict() 
 		self.current_board = np.zeros((8,8), dtype= object) # init board with numpy
 		#init as color 
-		print('color', color )
 		if color == 'b':
 			for i in range(1,9):
 				self.current_board[1][i-1] = 'p'+str(i)
@@ -92,15 +89,12 @@ class ChessPlay:
 
 	def s2ind(self,uci_move_string):
 		out = (7-int(str(uci_move_string)[1])+1, ord(str(uci_move_string)[0]) - 97)
-		#print(str(uci_move_string), '->', out)
 		return out
 	def s2ind_end(self, uci_move_string):
 		out = (7-int(str(uci_move_string)[3])+1, ord(str(uci_move_string)[2]) - 97)
-		#print(str(uci_move_string), '->', out)
 		return out
 	def eliminate(self, loc):
 		try:
-			#print('location change', loc)
 			l = np.unravel_index(int(str(loc)), self.current_board.shape)
 			#l = self.s2ind(loc)
 			self.pieces_status[self.current_board[l[0]][l[1]]] = 0
@@ -135,8 +129,6 @@ class ChessPlay:
 
 		pieces = dict()
 		out = np.array(self.current_board)
-		#print(out)
-		#print(self.pieces_status)
 		unassigned_pieces = []
 		enemy_status = dict()
 		pieceDistr = pieceDistr
@@ -164,26 +156,8 @@ class ChessPlay:
 				out[tmp[0]][tmp[1]] = p
 
 		#n = Node(out, enemy_status)
-		#print(out)
-		#print(enemy_status)
 		return out, enemy_status
-	'''
-	def scorer(self, board, my_status, enemy_status, kill, negation):
-		if negation: #enemy
-			out = random.randint(1,3)
-			if killing == 1:
-				#I kill piece
-				out -= 15
-		else:
-			out = random.randint(1,3)
-			if killing == 1:
-				#I kill piece
-				out -= 15
 
-		if negation:
-			out = 0 -out
-		return out
-	'''
 	def init_tree(self, possible_moves,pd,tlimit = 20):
 		# init minmax tree with scorring
 		self.time_check = time.time()
@@ -211,12 +185,9 @@ class ChessPlay:
 					enemy_status[board[loc_end[0]][loc_end[1]]] = 0
 					killed = board[loc_end[0]][loc_end[1]]
 
-					#print("凉了1")
 				elif not board[loc_end[0]][loc_end[1]] == 0:
-					#print("凉了2")
 					continue
 				elif board[loc_start[0]][loc_start[1]] in pound and not loc_start[1] == loc_end[1]: #pawn incline
-					#print("凉了3")
 					continue
 
 				board[loc_end[0]][loc_end[1]] = board[loc_start[0]][loc_start[1]]
@@ -413,10 +384,8 @@ class ChessPlay:
 						my_status[board[loc_end[0]][loc_end[1]]] = 0
 						killed = board[loc_end[0]][loc_end[1]]
 					elif not board[loc_end[0]][loc_end[1]] == 0:
-						#print("凉了2")
 						continue
 					elif board[loc_start[0]][loc_start[1]] in pound and not loc_start[1] == loc_end[1]: #pawn incline
-						#print("凉了3")
 						continue
 
 					board[loc_end[0]][loc_end[1]] = board[loc_start[0]][loc_start[1]]
@@ -438,7 +407,7 @@ class ChessPlay:
 						node.children.append(nxt_node)
 					if promotion:
 						p = board[loc_end[0]][loc_end[1]]
-						print('recover promotion',p)
+						# print('recover promotion',p)
 						board[loc_end[0]][loc_end[1]] = p[2:]
 						enemy_status[p[1:]] = enemy_status[p]
 						del enemy_status[p]
@@ -510,28 +479,14 @@ class ChessPlay:
 						enemy_status[board[loc_end[0]][loc_end[1]]] = 0
 						killed = board[loc_end[0]][loc_end[1]]
 					elif not board[loc_end[0]][loc_end[1]] == 0:
-						#print("凉了2")
 						continue
 					elif board[loc_start[0]][loc_start[1]] in pound and not loc_start[1] == loc_end[1]: #pawn incline
-						#print("凉了3")
 						continue
 					original = (loc_start,board[loc_start[0]][loc_start[1]])
 					board[loc_end[0]][loc_end[1]] = board[loc_start[0]][loc_start[1]]
 					board[loc_start[0]][loc_start[1]] = 0
-					'''
-					if(board[loc_end[0]][loc_end[1]]==0):
 
-						print(my_status)
-						print(board)
-						print(dest)
-						print(e)
-						print('loc_start->',loc_start)
-						print('loc_end->',loc_end)
-						print('issue')
-						exit()
-					'''
 					my_status[board[loc_end[0]][loc_end[1]]] =loc_end 
-					#print(loc_end,'my_s write', my_status[board[loc_end[0]][loc_end[1]]])
 					promotion = False
 					if board[loc_end[0]][loc_end[1]] in pound:
 						if (self.color == 'b' and my_status[board[loc_end[0]][loc_end[1]]][0] == 7) or (self.color == 'w' and my_status[board[loc_end[0]][loc_end[1]]][0] == 0):
@@ -551,26 +506,13 @@ class ChessPlay:
 						my_status[p[1:]] = my_status[p]
 						del my_status[p]
 					p = board[loc_end[0]][loc_end[1]]
-					'''
-					if(board[loc_end[0]][loc_end[1]]==0):
-						print('dp',depth)
-						print('original',original)
-						print(my_status)
-						print('loc_start',loc_start)
-						print('loc_end',loc_end)
-						print(board)
-						print('aha')
-						exit()
-					'''
+
 					my_status[p] = loc_start
 					board[loc_start[0]][loc_start[1]] = p
 					board[loc_end[0]][loc_end[1]] = 0
 					if not killed == None:
 						board[loc_end[0]][loc_end[1]] = killed 
 						enemy_status[killed] = loc_end
-					#print("============recovered===============")
-					#print(board)
-					#print("===================================")
 					#recover
 
 					#check max
@@ -610,10 +552,10 @@ class ChessPlay:
 		return None
 	
 	def counter_attack(self):
-		print('counter_attack')
 		self.scan_attacker(self.deadpos)
 
-	def decision_make(self, possible_moves,pd):
+	def decision_make(self, possible_moves,pd, remaining_time):
+		self.time_limit = min(self.time_limit, remaining_time / 20)
 		action = None
 		try:
 			#if scan king
@@ -627,17 +569,12 @@ class ChessPlay:
 				else:
 					self.killed = 0
 					self.deadpos = None
-			#self.king_scan(board)
-			
-			
 			_, action =self.init_tree(possible_moves, pd)
-			#print("==========","下一步走", action[0], '->', action[1],"=======")
 					
 		except :
 			#random move
 			traceback.print_exc()
 			self.onConflict = True
-			#exit()
 			return None
 			
 		return action

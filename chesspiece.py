@@ -1,5 +1,4 @@
 import random
-import logging
 import numpy as np
 import chess
 import datetime
@@ -8,17 +7,13 @@ from scipy.stats import entropy
 
 EXISTENCE_THRESHOLD = 0.9
 PROPAGATION_THRESHOLD = 0.0001
-np.set_printoptions(precision=5, suppress=True)
 
 class EnemyChessBoard:
 
     # Done
     def __init__(self, ourcolor):
-        logging.basicConfig(filename='debug.log',level=logging.DEBUG)
         # Color of us
         self.color = ourcolor
-        logging.info("Test at {}".format(datetime.datetime.now()))
-        logging.info("Color: {}".format(self.color))
         self.chessPiece = ['r1','n1','b1','q','k','b2','n2','r2',
         'p1','p2','p3','p4','p5','p6','p7','p8']
         self.pieceDistri = dict()
@@ -39,8 +34,6 @@ class EnemyChessBoard:
         self.allyBoard = np.concatenate((empty_board,occupied_space), axis = 0)
         if (self.color == chess.BLACK):
             self.allyBoard = np.rot90(np.rot90(self.allyBoard))
-        logging.info("Ally Initial Board")
-        logging.info(self.allyBoard)
 
         for piece_index, piece in enumerate(self.chessPiece):
             initial_distribution = np.zeros((8,8), dtype = np.float_)
@@ -53,9 +46,7 @@ class EnemyChessBoard:
             if piece[0] != 'p':
                 self.mightBeAlive[piece] = 1
                 self.markedDead[piece] = 0
-        
-        logging.info('Board Initialization Complete')
-        logging.info(sum([v for k,v in self.pieceDistri.items()]))
+
 
     # Done
     def getColor(self):
@@ -262,7 +253,6 @@ class EnemyChessBoard:
             elif (piece_type == 'k'):
                 updated_distribution = self.piece_propagate(current_distribution, self._king_available_moves)
             else:
-                logging.fatal("Abnormal Chess piece: {}".format(item))
                 print("See abnormal chess piece")
 
             self.pieceDistri[item] = updated_distribution
@@ -273,11 +263,9 @@ class EnemyChessBoard:
             return 
 
         move_string = move.uci()
-        logging.info("My Move: {}".format(move_string))
         (start, end) = self._move_string_to_idx(move_string)
         self.allyBoard[start[0]][start[1]] = 0
         self.allyBoard[end[0]][end[1]] = 1
-        logging.info("Update board:\n{}".format(self.allyBoard))
 
         # If in this observation
         if captured_piece:
