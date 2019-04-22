@@ -23,6 +23,10 @@ class MaybeBetterThanRandom(Player):
         self.prev_move_result = None
         self.position_of_capture = None
         self.player = None
+        self._initial_scholar_moves = list()
+        self._initial_scholar = 8
+        self._counter = 0
+        self._initial_enemy_king = None
         
     def handle_game_start(self, color, board):
         """
@@ -38,7 +42,19 @@ class MaybeBetterThanRandom(Player):
             c = 'b'
         self.player = ChessPlay(c)
 
-        
+        if color == chess.WHITE:
+            self._initial_enemy_king = 60
+            self._initial_scholar_moves.extend([chess.Move.from_uci("e2e4"),
+                                                chess.Move.from_uci("d1h5"),
+                                                chess.Move.from_uci("f1c4"),
+                                                chess.Move.from_uci("h5e8")])
+        else:
+            self._initial_enemy_king = 4
+            self._initial_scholar_moves.extend([chess.Move.from_uci("e7e5"),
+                                                chess.Move.from_uci("d8h4"),
+                                                chess.Move.from_uci("f8c5"),
+                                                chess.Move.from_uci("h4e1")])
+
     def handle_opponent_move_result(self, captured_piece, captured_square):
         """
         This function is called at the start of your turn and gives you the chance to update your board.
@@ -46,6 +62,7 @@ class MaybeBetterThanRandom(Player):
         :param captured_piece: bool - true if your opponents captured your piece with their last move
         :param captured_square: chess.Square - position where your piece was captured
         """
+        self._counter += 1
         try:
             self.enemyBoard.updateEnemyMove(captured_piece, captured_square)
             self.enemyBoard.propagate()
@@ -110,6 +127,14 @@ class MaybeBetterThanRandom(Player):
         :example: choice = chess.Move(chess.G7, chess.G8, promotion=chess.KNIGHT) *default is Queen
         """
         try:
+            if len(self._initial_scholar_moves) > 0:
+                scholar_move = self._initial_scholar_moves.pop(0)
+                if scholar_move in possible_moves:
+                    return scholar_move
+            elif self._counter < self._initial_scholar:
+                for eachMove in possible_moves:
+                    if eachMove.to_square == self._initial_enemy_king:
+                        return eachMove
             choose = self.player.decision_make(possible_moves, self.enemyBoard.returnDistribution(), seconds_left)
             
             if choose == None:
